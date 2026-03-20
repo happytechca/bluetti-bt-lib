@@ -1,5 +1,5 @@
 from ..base_devices import BaseDeviceV2
-from ..enums import ChargingMode, WorkingMode
+from ..enums import ChargingMode, DisplayMode, WorkingMode
 from ..fields import (
     FieldName,
     UIntField,
@@ -34,5 +34,6 @@ class AP300(BaseDeviceV2):
                 NumberField(FieldName.BATTERY_SOC_RANGE_END, 2023, min=0, max=100),
                 SelectField(FieldName.CTRL_WORKING_MODE, 2005, WorkingMode),
                 SwitchField(FieldName.CTRL_CHARGE_FROM_GRID, 2207),
+                SelectField(FieldName.CTRL_DISPLAY_TIMEOUT, 2067, DisplayMode),
             ],
         )
