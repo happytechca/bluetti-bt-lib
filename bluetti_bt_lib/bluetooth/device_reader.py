@@ -196,6 +196,69 @@ class DeviceReader:
 
             return parsed_data
 
+    async def write(self, field: str, value: Any) -> bool:
+        """Write a field value to the device (supports encryption)."""
+
+        command = self.bluetti_device.build_write_command(field, value)
+        if command is None:
+            self.logger.error("Field is not writeable: %s", field)
+            return False
+
+        async with self.polling_lock:
+            try:
+                async with async_timeout.timeout(self.config.timeout):
+                    if self.ble_client:
+                        self.client = self.ble_client
+                    else:
+                        self.device = await BleakScanner.find_device_by_address(
+                            self.mac, timeout=5
+                        )
+                        if self.device is None:
+                            self.logger.error("Device not found")
+                            return False
+                        self.client = await establish_connection(
+                            BleakClientWithServiceCache,
+                            self.device,
+                            self.device.name or "Unknown Device",
+                            max_attempts=10,
+                        )
+
+                    if not self.has_notifier:
+                        await self.client.start_notify(
+                            NOTIFY_UUID, self._notification_handler
+                        )
+                        self.has_notifier = True
+
+                    while (
+                        self.config.use_encryption
+                        and not self.encryption.is_ready_for_commands
+                    ):
+                        await asyncio.sleep(5)
+
+                    await self._async_send_command(command)
+                    await asyncio.sleep(5)
+                    return True
+
+            except TimeoutError:
+                self.logger.warning("Write timeout")
+                return False
+            except BleakError as err:
+                self.logger.warning("Write bleak error: %s", err)
+                return False
+            except BaseException as err:
+                self.logger.warning("Write error: %s", err)
+                return False
+            finally:
+                if self.has_notifier:
+                    try:
+                        await self.client.stop_notify(NOTIFY_UUID)
+                    except:
+                        pass
+                    self.has_notifier = False
+                if self.client:
+                    await self.client.disconnect()
+                self.encryption.reset()
+
     async def _async_send_command(self, registers: DeviceRegister) -> bytes:
         """Send command and return response"""
         self.current_registers = registers
