@@ -3,6 +3,7 @@ from ..enums import ChargingMode
 from ..fields import (
     FieldName,
     UIntField,
+    NumberField,
     DecimalField,
     SwitchField,
     SelectField,
@@ -29,7 +30,7 @@ class AP300(BaseDeviceV2):
                 SwitchField(FieldName.CTRL_ECO_AC, 2017),
                 SelectField(FieldName.CTRL_CHARGING_MODE, 2020, ChargingMode),
                 SwitchField(FieldName.CTRL_POWER_LIFTING, 2021),
-                UIntField(FieldName.BATTERY_SOC_RANGE_START, 2022),
-                UIntField(FieldName.BATTERY_SOC_RANGE_END, 2023),
+                NumberField(FieldName.BATTERY_SOC_RANGE_START, 2022, min=0, max=100),
+                NumberField(FieldName.BATTERY_SOC_RANGE_END, 2023, min=0, max=100),
             ],
         )
