@@ -15,9 +15,10 @@ from ..utils.privacy import mac_loggable
 
 
 class DeviceReaderConfig:
-    def __init__(self, timeout: int = 60, use_encryption: bool = False) -> None:
+    def __init__(self, timeout: int = 60, use_encryption: bool = False, keep_alive_seconds: int = 0) -> None:
         self.timeout = timeout
         self.use_encryption = use_encryption
+        self.keep_alive_seconds = keep_alive_seconds
 
 
 class DeviceReader:
@@ -144,7 +145,8 @@ class DeviceReader:
                 return None
             finally:
                 if self.connection is not None:
-                    self._teardown_shared_connection()
+                    self.connection.clear_data_callback()
+                    asyncio.ensure_future(self._deferred_disconnect())
                 else:
                     await self._teardown_standalone_connection()
 
@@ -200,9 +202,11 @@ class DeviceReader:
             await asyncio.sleep(5)
             self.logger.debug("Encryption handshake not finished yet")
 
-    def _teardown_shared_connection(self) -> None:
-        """Release the data callback — connection stays open."""
-        self.connection.clear_data_callback()
+    async def _deferred_disconnect(self) -> None:
+        """Wait keep_alive_seconds, then disconnect to free the BLE slot."""
+        if self.config.keep_alive_seconds > 0:
+            await asyncio.sleep(self.config.keep_alive_seconds)
+        await self.connection.disconnect()
 
     async def _teardown_standalone_connection(self) -> None:
         """Stop notifications and disconnect own client."""
