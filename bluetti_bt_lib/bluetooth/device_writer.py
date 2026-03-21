@@ -80,16 +80,13 @@ class DeviceWriter:
 
     async def _complete_encryption_handshake(self):
         """Subscribe to BLE notifications and wait until ECDH key exchange is complete."""
+        self._handshake_complete = asyncio.Event()
         await self.client.start_notify(NOTIFY_UUID, self._on_encryption_message)
         self.logger.debug("Waiting for encryption handshake...")
-
-        elapsed = 0.0
-        while not self._encryption.is_ready_for_commands:
-            await asyncio.sleep(0.5)
-            elapsed += 0.5
-            if elapsed > 12:
-                raise TimeoutError("Encryption handshake timed out")
-
+        try:
+            await asyncio.wait_for(self._handshake_complete.wait(), timeout=12)
+        except asyncio.TimeoutError:
+            raise TimeoutError("Encryption handshake timed out")
         self.logger.debug("Encryption handshake complete")
 
     async def _cleanup(self):
@@ -142,3 +139,4 @@ class DeviceWriter:
         elif decrypted.type == MessageType.PUBKEY_ACCEPTED:
             self.logger.debug("Key exchange complete, shared secret established")
             self._encryption.msg_key_accepted(decrypted)
+            self._handshake_complete.set()
