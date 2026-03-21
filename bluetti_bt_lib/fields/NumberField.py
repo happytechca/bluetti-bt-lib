@@ -1,4 +1,3 @@
-from . import FieldName
 from .UIntField import UIntField
 
 

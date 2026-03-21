@@ -41,7 +41,7 @@ Added and mostly validated by contributors (some are moved here from the HA Inte
 |AC200PL    |[@0x4E4448](https://github.com/0x4E4448)                                           |✅                   |✅            |✅            |✅             |✅             |
 |AC300      |bluetti-mqtt                                                                       |✅                   |✅            |✅            |✅             |✅             |
 |AC500      |bluetti-mqtt                                                                       |✅                   |✅            |✅            |✅             |✅             |
-|AP300      |[@seaburger](https://github.com/seaburger), [@sidieje](https://github.com/sidieje) |✅                   |✅            |✅            |✅             |✅             |
+|AP300      |[@seaburger](https://github.com/seaburger), [@sidieje](https://github.com/sidieje), [@happytechca](https://github.com/happytechca) |✅                   |✅            |✅            |✅             |✅             |
 |EL30V2     |[@dgudim](https://github.com/dgudim)                                               |✅                   |✅            |✅            |✅             |✅             |
 |EL100V2    |[@seaburger](https://github.com/seaburger)                                         |✅                   |✅            |✅            |✅             |✅             |
 |EP500      |bluetti-mqtt                                                                       |✅                   |✅            |✅            |✅             |✅             |
@@ -59,9 +59,10 @@ Validated:
 |EB3A       |✅     |✅     |
 
 Added and mostly validated by contributors:
-|Device Name|Contributor                                              |ctrl_ac|ctrl_dc|ctrl_ups_mode|soc_range_start|soc_range_end|
-|-----------|---------------------------------------------------------|-------|-------|-------------|---------------|-------------|
-|AC200L     |bluetti-mqtt, [@seaburger](https://github.com/seaburger) |✅     |✅     |✅           |❌             |❌           |
+|Device Name|Contributor                                              |ctrl_ac|ctrl_dc|ctrl_ups_mode|soc_range_start|soc_range_end|working_mode|charge_from_grid|charging_mode|power_lifting|eco_ac|eco_dc|display_timeout|
+|-----------|---------------------------------------------------------|-------|-------|-------------|---------------|-------------|------------|----------------|-------------|-------------|------|------|---------------|
+|AC200L     |bluetti-mqtt, [@seaburger](https://github.com/seaburger) |✅     |✅     |✅           |❌             |❌           |❌          |❌              |❌           |❌           |❌    |❌    |❌             |
+|AP300      |[@happytechca](https://github.com/happytechca)           |✅     |✅     |❌           |✅             |✅           |✅          |✅              |✅           |✅           |✅    |✅    |✅             |
 
 ## Battery pack data
 
@@ -156,7 +157,7 @@ FieldName.CTRL_POWER_LIFTING: False
 
 ### Write to supported device
 
-INFO: Devices with encryption are currently not supported!
+INFO: Devices with encryption are now supported via the `DeviceReader.write()` method.
 
 ```bash
 usage: bluetti-write [-h] [-m MAC] [-t TYPE] [--on ON] [--off OFF] [-v VALUE] [-e ENCRYPTION] field
