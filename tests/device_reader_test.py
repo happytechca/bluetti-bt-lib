@@ -1,9 +1,10 @@
 import asyncio
 import unittest
+from unittest.mock import patch
 
-from bluetti_bt_lib.base_devices import BaseDeviceV1
+from bluetti_bt_lib.base_devices import BaseDeviceV1, BluettiDevice
 from bluetti_bt_lib import DeviceReader
-from bluetti_bt_lib.fields import FieldName
+from bluetti_bt_lib.fields import FieldName, SwitchField, NumberField
 from bluetti_bt_lib.utils.bleak_client_mock import ClientMockNoEncryption
 
 
@@ -61,3 +62,55 @@ class TestDeviceReader(unittest.IsolatedAsyncioTestCase):
         data = await reader.read()
 
         self.assertIsNone(data.get(FieldName.BATTERY_SOC.value))
+
+
+class TestDeviceReaderWrite(unittest.IsolatedAsyncioTestCase):
+    def setUp(self):
+        self.ble_mock = ClientMockNoEncryption()
+
+    @patch("asyncio.sleep", return_value=None)
+    async def test_write_switch_field(self, mock_sleep):
+        device = BluettiDevice(
+            fields=[SwitchField(FieldName.CTRL_AC, 2011)],
+        )
+        reader = DeviceReader(
+            "00:11:00:11:00:11",
+            device,
+            asyncio.Future,
+            ble_client=self.ble_mock,
+        )
+
+        result = await reader.write(FieldName.CTRL_AC.value, True)
+        self.assertTrue(result)
+
+    @patch("asyncio.sleep", return_value=None)
+    async def test_write_number_field(self, mock_sleep):
+        device = BluettiDevice(
+            fields=[
+                NumberField(FieldName.BATTERY_SOC_RANGE_START, 2022, min=0, max=100),
+            ],
+        )
+        reader = DeviceReader(
+            "00:11:00:11:00:11",
+            device,
+            asyncio.Future,
+            ble_client=self.ble_mock,
+        )
+
+        result = await reader.write(FieldName.BATTERY_SOC_RANGE_START.value, 75)
+        self.assertTrue(result)
+
+    @patch("asyncio.sleep", return_value=None)
+    async def test_write_non_writeable_field(self, mock_sleep):
+        device = BluettiDevice(
+            fields=[SwitchField(FieldName.CTRL_AC, 2011)],
+        )
+        reader = DeviceReader(
+            "00:11:00:11:00:11",
+            device,
+            asyncio.Future,
+            ble_client=self.ble_mock,
+        )
+
+        result = await reader.write("nonexistent_field", True)
+        self.assertFalse(result)

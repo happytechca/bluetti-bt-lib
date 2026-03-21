@@ -95,9 +95,14 @@ class BleakClientMock:
         data: Buffer,
         response: bool = None,
     ) -> None:
-        cmd = struct.unpack_from("!HHHH", data)
-        content = await self._get_register(cmd[1], cmd[2])
-        await self._callback(char_specifier, content)
+        action = struct.unpack_from("!BB", data)[1]
+        if action == 6:
+            # Write command: echo back the command as acknowledgement
+            await self._callback(char_specifier, bytearray(data))
+        else:
+            cmd = struct.unpack_from("!HHHH", data)
+            content = await self._get_register(cmd[1], cmd[2])
+            await self._callback(char_specifier, content)
 
     async def _get_register(self, addr: int, size: int):
         data = self._bytemap[(addr * 2) : (addr * 2 + size * 2)]
